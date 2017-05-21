@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: k8s-heapster
+  namespace: kube-system
+  labels:
+    k8s-app: k8s-heapster
+    task: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: k8s-heapster
+      task: monitoring
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        k8s-app: k8s-heapster
+        task: monitoring
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: default-pool
+      containers:
+      - name: k8s-heapster
+        image: gcr.io/google_containers/heapster-amd64:v1.3.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8082
+            scheme: HTTP
+          initialDelaySeconds: 180
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 107m
+            memory: 356Mi
+          requests:
+            cpu: 107m
+            memory: 356Mi
+        command:
+        - /heapster
+        - --source=kubernetes.summary_api:''
+        - --vmodule=*=4
+        - --sink=influxdb:https://influxdb.example.com:8086?secure=true&db=heapster&user=heapster&pw=$INFLUX_PASSWORD&retention=90d
