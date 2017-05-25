@@ -1,4 +1,4 @@
-# Elite-Heapster
+# k8s-Heapster
 
 Deploys Heapster monitoring for Kubernetes to send cluster metrics to InfluxDB
 
